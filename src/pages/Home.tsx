@@ -1,73 +1,89 @@
 import { useNavigate } from 'react-router-dom';
 import { Store, Users, Lock, Bike, Package } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+type DashboardColor = 'blue' | 'green' | 'purple' | 'orange';
+
+interface Dashboard {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  path: string;
+  color: DashboardColor;
+}
 
 const Home = () => {
   const navigate = useNavigate();
 
-  const dashboards = [
-    {
-      id: 'merchant',
-      title: 'Merchant Dashboard',
-      description: 'Manage parcels, track shipments, and monitor your account',
-      icon: Store,
-      path: '/merchant-dashboard',
-      color: 'blue'
-    },
-    {
-      id: 'hub-manager',
-      title: 'Hub Manager Dashboard',
-      description: 'Manage distribution hubs and coordinate deliveries',
-      icon: Users,
-      path: '/hub-manager',
-      color: 'green'
-    },
-    {
-      id: 'admin',
-      title: 'Admin Dashboard',
-      description: 'Administrative controls and system management',
-      icon: Lock,
-      path: '/admin-dashboard',
-      color: 'purple'
-    },
-    {
-      id: 'rider',
-      title: 'Rider Dashboard',
-      description: 'View assigned deliveries and manage routes',
-      icon: Bike,
-      path: '/rider-dashboard',
-      color: 'orange'
-    }
-  ];
+ const dashboards: Dashboard[] = [
+  {
+    id: 'merchant',
+    title: 'Merchant Dashboard',
+    description: 'Manage parcels, track shipments, and monitor your account',
+    icon: Store,
+    path: '/merchant-dashboard',
+    color: 'blue'
+  },
+  {
+    id: 'hub-manager',
+    title: 'Hub Manager Dashboard',
+    description: 'Manage distribution hubs and coordinate deliveries',
+    icon: Users,
+    path: '/hub-manager',
+    color: 'green'
+  },
+  {
+    id: 'admin',
+    title: 'Admin Dashboard',
+    description: 'Administrative controls and system management',
+    icon: Lock,
+    path: '/admin-dashboard',
+    color: 'purple'
+  },
+  {
+    id: 'rider',
+    title: 'Rider Dashboard',
+    description: 'View assigned deliveries and manage routes',
+    icon: Bike,
+    path: '/rider-dashboard',
+    color: 'orange'
+  }
+];
 
-  const getColorClasses = (color: string) => {
-    const colors: { [key: string]: { bg: string; text: string; border: string; hover: string } } = {
-      blue: {
-        bg: 'bg-blue-50',
-        text: 'text-blue-600',
-        border: 'border-blue-200',
-        hover: 'hover:shadow-lg hover:border-blue-300'
-      },
-      green: {
-        bg: 'bg-green-50',
-        text: 'text-green-600',
-        border: 'border-green-200',
-        hover: 'hover:shadow-lg hover:border-green-300'
-      },
-      purple: {
-        bg: 'bg-purple-50',
-        text: 'text-purple-600',
-        border: 'border-purple-200',
-        hover: 'hover:shadow-lg hover:border-purple-300'
-      },
-      orange: {
-        bg: 'bg-orange-50',
-        text: 'text-orange-600',
-        border: 'border-orange-200',
-        hover: 'hover:shadow-lg hover:border-orange-300'
-      }
-    };
-    return colors[color];
-  };
+
+ const colorMap: Record<
+  DashboardColor,
+  { bg: string; text: string; border: string; hover: string }
+> = {
+  blue: {
+    bg: 'bg-blue-50',
+    text: 'text-blue-600',
+    border: 'border-blue-200',
+    hover: 'hover:shadow-lg hover:border-blue-300'
+  },
+  green: {
+    bg: 'bg-green-50',
+    text: 'text-green-600',
+    border: 'border-green-200',
+    hover: 'hover:shadow-lg hover:border-green-300'
+  },
+  purple: {
+    bg: 'bg-purple-50',
+    text: 'text-purple-600',
+    border: 'border-purple-200',
+    hover: 'hover:shadow-lg hover:border-purple-300'
+  },
+  orange: {
+    bg: 'bg-orange-50',
+    text: 'text-orange-600',
+    border: 'border-orange-200',
+    hover: 'hover:shadow-lg hover:border-orange-300'
+  }
+};
+
+const getColorClasses = (color: DashboardColor) => colorMap[color];
+
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-900 to-gray-800 flex flex-col">
