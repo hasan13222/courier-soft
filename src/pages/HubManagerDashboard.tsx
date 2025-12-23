@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Package,
   Truck,
@@ -8,13 +9,12 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  AlertCircle,
-  MapPin,
   ArrowRight,
   ScanLine,
   ClipboardList,
   Send,
   UserCheck,
+  Home,
 } from "lucide-react";
 
 /**
@@ -32,7 +32,7 @@ const nowTime = () =>
 
 const uid = () => `PCL${Math.floor(1000 + Math.random() * 9000)}`;
 
-const statusPill = (status) => {
+const statusPill = (status: string) => {
   const base = "px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full";
   if (["Arrived", "In Hub", "Delivered"].includes(status))
     return `${base} bg-green-100 text-green-800`;
@@ -44,7 +44,52 @@ const statusPill = (status) => {
   return `${base} bg-gray-100 text-gray-800`;
 };
 
-const Modal = ({ title, children, onClose, footer }) => (
+type Log = { at: string; note: string; status: string };
+
+type IncomingParcel = {
+  id: string;
+  origin?: string;
+  destination?: string;
+  status: string;
+  eta?: string;
+  rider?: string;
+  weight?: string;
+  type?: string;
+  logs?: Log[];
+};
+
+type InventoryParcel = {
+  id: string;
+  origin?: string;
+  destination?: string;
+  status: string;
+  receivedAt?: string;
+  weight?: string;
+  nextHop?: string;
+  routeType?: string;
+  logs?: Log[];
+};
+
+type OutgoingParcel = {
+  id: string;
+  destination?: string;
+  status: string;
+  assignedTo?: string;
+  weight?: string;
+  routeType?: string;
+  nextHop?: string;
+  logs?: Log[];
+};
+
+type Parcel = IncomingParcel | InventoryParcel | OutgoingParcel;
+
+type Rider = { id: string; name: string; status: string; parcels: number; area: string; phone?: string };
+
+type Toast = { msg: string; type?: "success" | "error" } | null;
+
+type ModalProps = { title: string; children: React.ReactNode; onClose: () => void; footer?: React.ReactNode };
+
+const Modal: React.FC<ModalProps> = ({ title, children, onClose, footer }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 overflow-hidden">
       <div className="p-5 border-b flex items-center justify-between">
@@ -59,16 +104,17 @@ const Modal = ({ title, children, onClose, footer }) => (
   </div>
 );
 
-const HubManagerDashboard = () => {
+const HubManagerDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const HUB_NAME = "Dhaka Central Hub";
 
-  const [activeModule, setActiveModule] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeModule, setActiveModule] = useState<string>("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
   // ------------------------------
   // DATA (mock)
   // ------------------------------
-  const [incomingParcels, setIncomingParcels] = useState([
+  const [incomingParcels, setIncomingParcels] = useState<IncomingParcel[]>([
     {
       id: "PCL001",
       origin: "Gulshan Hub",
@@ -105,7 +151,7 @@ const HubManagerDashboard = () => {
   ]);
 
   // Inventory means physically in this hub warehouse (sorted/scanned)
-  const [inventoryParcels, setInventoryParcels] = useState([
+  const [inventoryParcels, setInventoryParcels] = useState<InventoryParcel[]>([
     {
       id: "PCL100",
       origin: "Barishal District",
@@ -119,7 +165,7 @@ const HubManagerDashboard = () => {
     },
   ]);
 
-  const [outgoingParcels, setOutgoingParcels] = useState([
+  const [outgoingParcels, setOutgoingParcels] = useState<OutgoingParcel[]>([
     {
       id: "PCL004",
       destination: "Sylhet District",
@@ -152,7 +198,7 @@ const HubManagerDashboard = () => {
     },
   ]);
 
-  const [riders, setRiders] = useState([
+  const [riders, setRiders] = useState<Rider[]>([
     { id: "R001", name: "Karim Ahmed", status: "Available", parcels: 0, area: "Gulshan-Banani", phone: "01XXXXXXXXX" },
     { id: "R002", name: "Rahim Uddin", status: "On Delivery", parcels: 3, area: "Dhanmondi-Mohammadpur", phone: "01XXXXXXXXX" },
     { id: "R003", name: "Jalal Miah", status: "Available", parcels: 0, area: "Mirpur-Pallabi", phone: "01XXXXXXXXX" },
@@ -163,15 +209,21 @@ const HubManagerDashboard = () => {
   // ------------------------------
   // UI State
   // ------------------------------
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState<Toast>(null);
 
-  const [parcelModal, setParcelModal] = useState(null); // parcel object
-  const [riderModal, setRiderModal] = useState(null); // rider object
+  const [parcelModal, setParcelModal] = useState<Parcel | null>(null);
+  const [riderModal, setRiderModal] = useState<Rider | null>(null);
 
-  const [assignModal, setAssignModal] = useState({ open: false, parcelIds: [] });
-  const [assignRiderId, setAssignRiderId] = useState("");
+  const [assignModal, setAssignModal] = useState<{ open: boolean; parcelIds: string[] }>({ open: false, parcelIds: [] });
+  const [assignRiderId, setAssignRiderId] = useState<string>("");
 
-  const [createOutgoingModal, setCreateOutgoingModal] = useState({
+  const [createOutgoingModal, setCreateOutgoingModal] = useState<{
+    open: boolean;
+    parcelId: string | null;
+    routeType: string;
+    nextHop: string;
+    destination: string;
+  }>({
     open: false,
     parcelId: null,
     routeType: "To District Hub",
@@ -179,12 +231,12 @@ const HubManagerDashboard = () => {
     destination: "",
   });
 
-  const [scanModalOpen, setScanModalOpen] = useState(false);
-  const [scanValue, setScanValue] = useState("");
+  const [scanModalOpen, setScanModalOpen] = useState<boolean>(false);
+  const [scanValue, setScanValue] = useState<string>("");
 
-  const [incomingSelected, setIncomingSelected] = useState(new Set());
-  const [inventorySelected, setInventorySelected] = useState(new Set());
-  const [outgoingSelected, setOutgoingSelected] = useState(new Set());
+  const [incomingSelected, setIncomingSelected] = useState<Set<string>>(new Set<string>());
+  const [inventorySelected, setInventorySelected] = useState<Set<string>>(new Set<string>());
+  const [outgoingSelected, setOutgoingSelected] = useState<Set<string>>(new Set<string>());
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: TrendingUp },
@@ -197,18 +249,22 @@ const HubManagerDashboard = () => {
   // ------------------------------
   // Helpers / mutations
   // ------------------------------
-  const showToast = (msg, type = "success") => {
+  const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 1800);
   };
 
-  const addLog = (parcel, status, note) => ({
+  const addLog = <T extends { logs?: Log[] }>(parcel: T, status: string, note: string) => ({
     ...parcel,
     status,
     logs: [...(parcel.logs || []), { at: nowTime(), status, note }],
   });
 
-  const toggleSet = (setFn, setValue, id) => {
+  const toggleSet = (
+    setFn: React.Dispatch<React.SetStateAction<Set<string>>>,
+    // setValue: Set<string>,
+    id: string
+  ) => {
     setFn((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -217,12 +273,16 @@ const HubManagerDashboard = () => {
     });
   };
 
-  const setAllSelected = (setFn, list, checked) => {
-    setFn(() => (checked ? new Set(list.map((x) => x.id)) : new Set()));
+  const setAllSelected = (
+    setFn: React.Dispatch<React.SetStateAction<Set<string>>>,
+    list: { id: string }[],
+    checked: boolean
+  ) => {
+    setFn(() => (checked ? new Set(list.map((x) => x.id)) : new Set<string>()));
   };
 
   // Incoming: mark as Arrived (gate scan)
-  const markArrived = (parcelId) => {
+  const markArrived = (parcelId: string) => {
     setIncomingParcels((prev) =>
       prev.map((p) => (p.id === parcelId ? addLog(p, "Arrived", "Marked as arrived") : p))
     );
@@ -230,10 +290,10 @@ const HubManagerDashboard = () => {
   };
 
   // Incoming: process Arrived -> Inventory (In Hub)
-  const processToInventory = (parcelId) => {
-    let moved = null;
+  const processToInventory = (parcelId: string) => {
+    let moved: IncomingParcel | null = null;
     setIncomingParcels((prev) => {
-      const next = [];
+      const next: IncomingParcel[] = [];
       for (const p of prev) {
         if (p.id === parcelId) moved = p;
         else next.push(p);
@@ -243,18 +303,19 @@ const HubManagerDashboard = () => {
 
     if (!moved) return;
 
+    const movedParcel: IncomingParcel = moved;
     const inv = addLog(
       {
-        id: moved.id,
-        origin: moved.origin,
-        destination: moved.destination,
-        weight: moved.weight || "—",
+        id: movedParcel.id,
+        origin: movedParcel.origin,
+        destination: movedParcel.destination,
+        weight: movedParcel.weight || "—",
         receivedAt: nowTime(),
-        nextHop: moved.destination, // default guess (edit later)
-        routeType: moved.type || "Hub Transfer",
-        logs: moved.logs || [],
+        nextHop: movedParcel.destination, // default guess (edit later)
+        routeType: movedParcel.type || "Hub Transfer",
+        logs: movedParcel.logs || [],
         status: "In Hub",
-      },
+      } as InventoryParcel,
       "In Hub",
       `Processed into ${HUB_NAME} inventory`
     );
@@ -264,7 +325,7 @@ const HubManagerDashboard = () => {
   };
 
   // Inventory: open create outgoing (choose next hop / route)
-  const openCreateOutgoing = (parcelId) => {
+  const openCreateOutgoing = (parcelId: string) => {
     const p = inventoryParcels.find((x) => x.id === parcelId);
     setCreateOutgoingModal({
       open: true,
@@ -304,6 +365,12 @@ const HubManagerDashboard = () => {
     showToast(`Outgoing created for ${parcelId}`);
   };
 
+  // Open assign rider modal
+  const openAssign = (parcelIds: string[]) => {
+    setAssignModal({ open: true, parcelIds });
+    setAssignRiderId("");
+  };
+
   // Outgoing: assign rider (only Ready)
   const applyAssignRider = () => {
     const { parcelIds } = assignModal;
@@ -325,6 +392,14 @@ const HubManagerDashboard = () => {
       })
     );
 
+    // Handle incoming parcels
+    setIncomingParcels((prev) =>
+      prev.map((p) => {
+        if (!parcelIds.includes(p.id)) return p;
+        return addLog({ ...p, rider: rider.name }, p.status, `Assigned rider: ${rider.name} (${rider.id})`);
+      })
+    );
+
     // increase rider parcel count (demo)
     setRiders((prev) =>
       prev.map((r) => (r.id === rider.id ? { ...r, parcels: r.parcels + parcelIds.length } : r))
@@ -333,10 +408,14 @@ const HubManagerDashboard = () => {
     setAssignModal({ open: false, parcelIds: [] });
     setAssignRiderId("");
     showToast(`Assigned ${parcelIds.length} parcel(s) to ${rider.name}`);
+    
+    // Clear selections
+    setIncomingSelected(new Set());
+    setOutgoingSelected(new Set());
   };
 
   // Outgoing: dispatch (Ready -> Dispatched)
-  const dispatchParcel = (parcelId) => {
+  const dispatchParcel = (parcelId: string) => {
     setOutgoingParcels((prev) =>
       prev.map((p) => {
         if (p.id !== parcelId) return p;
@@ -351,8 +430,8 @@ const HubManagerDashboard = () => {
     showToast(`Dispatched ${parcelId}`);
   };
 
-  const bulkDispatch = (parcelIds) => {
-    const ids = parcelIds.filter(Boolean);
+  const bulkDispatch = (parcelIds: (string | undefined | null)[]) => {
+    const ids = parcelIds.filter(Boolean) as string[];
     setOutgoingParcels((prev) =>
       prev.map((p) => {
         if (!ids.includes(p.id)) return p;
@@ -381,15 +460,16 @@ const HubManagerDashboard = () => {
     // If exists elsewhere, just open details
     const inInventory = inventoryParcels.find((p) => p.id === code);
     const inOutgoing = outgoingParcels.find((p) => p.id === code);
-    if (inInventory || inOutgoing) {
-      setParcelModal(inInventory || inOutgoing);
+    const found = inInventory || inOutgoing;
+    if (found) {
+      setParcelModal(found);
       setScanValue("");
       setScanModalOpen(false);
       return;
     }
 
     // Create new incoming record (demo)
-    const newP = {
+    const newP: IncomingParcel = {
       id: code,
       origin: "Unknown Origin",
       destination: HUB_NAME,
@@ -601,8 +681,8 @@ const HubManagerDashboard = () => {
     const filtered = incomingParcels.filter((p) => {
       const matchesSearch =
         p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.destination.toLowerCase().includes(searchTerm.toLowerCase());
+        (p.origin || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.destination || "").toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = !statusFilter || p.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -663,13 +743,27 @@ const HubManagerDashboard = () => {
             Select all
           </label>
 
-          <button
-            onClick={bulkProcess}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
-          >
-            <ClipboardList size={18} />
-            Process to Inventory
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                const ids = [...incomingSelected];
+                if (ids.length === 0) return showToast("Select parcels first", "error");
+                setAssignModal({ open: true, parcelIds: ids });
+                setAssignRiderId("");
+              }}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 inline-flex items-center gap-2"
+            >
+              <UserCheck size={18} />
+              Assign Rider
+            </button>
+            <button
+              onClick={bulkProcess}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
+            >
+              <ClipboardList size={18} />
+              Process to Inventory
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -694,7 +788,7 @@ const HubManagerDashboard = () => {
                     <input
                       type="checkbox"
                       checked={incomingSelected.has(p.id)}
-                      onChange={() => toggleSet(setIncomingSelected, incomingSelected, p.id)}
+                      onChange={() => toggleSet(setIncomingSelected, p.id)}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.id}</td>
@@ -712,6 +806,13 @@ const HubManagerDashboard = () => {
                       className="text-gray-700 hover:text-gray-900 font-medium mr-3"
                     >
                       View
+                    </button>
+
+                    <button
+                      onClick={() => openAssign([p.id])}
+                      className="text-purple-600 hover:text-purple-900 font-medium mr-3"
+                    >
+                      Assign
                     </button>
 
                     {p.status !== "Arrived" ? (
@@ -861,7 +962,7 @@ const HubManagerDashboard = () => {
                     <input
                       type="checkbox"
                       checked={inventorySelected.has(p.id)}
-                      onChange={() => toggleSet(setInventorySelected, inventorySelected, p.id)}
+                      onChange={() => toggleSet(setInventorySelected, p.id)}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.id}</td>
@@ -902,16 +1003,11 @@ const HubManagerDashboard = () => {
     const filtered = outgoingParcels.filter((p) => {
       const matchesSearch =
         p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.destination || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.nextHop || "").toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = !statusFilter || p.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-
-    const openAssign = (parcelIds) => {
-      setAssignModal({ open: true, parcelIds });
-      setAssignRiderId("");
-    };
 
     const bulkAssign = () => {
       const ids = [...outgoingSelected];
@@ -1010,7 +1106,7 @@ const HubManagerDashboard = () => {
                     <input
                       type="checkbox"
                       checked={outgoingSelected.has(p.id)}
-                      onChange={() => toggleSet(setOutgoingSelected, outgoingSelected, p.id)}
+                      onChange={() => toggleSet(setOutgoingSelected, p.id)}
                     />
                   </td>
 
@@ -1166,7 +1262,7 @@ const HubManagerDashboard = () => {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-[60] px-4 py-3 rounded-lg shadow-lg text-white ${
+          className={`fixed top-4 right-4 z-60 px-4 py-3 rounded-lg shadow-lg text-white ${
             toast.type === "error" ? "bg-red-600" : "bg-green-600"
           }`}
         >
@@ -1181,8 +1277,13 @@ const HubManagerDashboard = () => {
         } bg-linear-to-b from-green-600 to-green-700 text-white transition-all duration-300 flex flex-col`}
       >
         <div className="p-4 flex items-center justify-between border-b border-green-500">
-          {sidebarOpen && <h1 className="text-xl font-bold">Hub Manager</h1>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-green-500 rounded-lg">
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate('/')} className="p-2 hover:bg-green-500 rounded-lg transition-colors" title="Back to Home">
+              <Home size={20} />
+            </button>
+            {sidebarOpen && <h1 className="text-xl font-bold">Hub Manager</h1>}
+          </div>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-green-500 rounded-lg transition-colors">
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>

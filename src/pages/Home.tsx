@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Store, Users, Lock, Bike, Package } from 'lucide-react';
 
@@ -11,7 +10,7 @@ const Home = () => {
       title: 'Merchant Dashboard',
       description: 'Manage parcels, track shipments, and monitor your account',
       icon: Store,
-      path: '/merchant-manager',
+      path: '/merchant-dashboard',
       color: 'blue'
     },
     {
@@ -27,7 +26,7 @@ const Home = () => {
       title: 'Admin Dashboard',
       description: 'Administrative controls and system management',
       icon: Lock,
-      path: '/admin',
+      path: '/admin-dashboard',
       color: 'purple'
     },
     {
@@ -35,7 +34,7 @@ const Home = () => {
       title: 'Rider Dashboard',
       description: 'View assigned deliveries and manage routes',
       icon: Bike,
-      path: '/rider',
+      path: '/rider-dashboard',
       color: 'orange'
     }
   ];
@@ -71,9 +70,9 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col">
+    <div className="min-h-screen bg-linear-to-b from-gray-900 to-gray-800 flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg">
+      <div className="bg-linear-to-r from-green-600 to-green-700 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-16">
           <div className="flex items-center gap-3 mb-4">
             <Package size={40} />
@@ -104,7 +103,7 @@ const Home = () => {
                   className={`group relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${colorClasses.bg} ${colorClasses.border} ${colorClasses.hover} text-left`}
                 >
                   {/* Background gradient effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                   {/* Content */}
                   <div className="relative p-6 h-full flex flex-col">

@@ -1,18 +1,96 @@
 import React, { useState } from 'react';
-import { Package, Plus, List, Menu, X, TrendingUp, Clock, CheckCircle, Search, DollarSign, Calculator, MapPin, Navigation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Package, Plus, List, Menu, X, TrendingUp, Clock, CheckCircle, DollarSign, Calculator, MapPin, Navigation, Home } from 'lucide-react';
 
-const MerchantDashboard = () => {
-  const [activeModule, setActiveModule] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [parcels, setParcels] = useState([
+type Parcel = {
+  id: string;
+  customer: string;
+  destination: string;
+  status: 'In Transit' | 'Delivered' | 'Pickup Pending' | string;
+  date: string;
+  phone?: string;
+};
+
+type MenuItem = { id: string; label: string; icon: React.ComponentType<any> };
+
+type AddParcelFormData = {
+  customerName: string;
+  phone: string;
+  address: string;
+  district: string;
+  area: string;
+  weight: string;
+  category: string;
+  cod: string;
+  instructions: string;
+};
+
+type PriceMatrix = Record<string, { basePrice: number; perKg: number }>;
+
+type TrackingStep = { step: string; completed: boolean };
+
+// Interfaces
+// interface Parcel {
+//   id: string;
+//   customer: string;
+//   destination: string;
+//   status: 'In Transit' | 'Delivered' | 'Pickup Pending';
+//   date: string;
+//   phone: string;
+// }
+
+// interface MenuItem {
+//   id: string;
+//   label: string;
+//   icon: React.ComponentType<{ size?: number }>;
+// }
+
+// interface AddParcelFormData {
+//   customerName: string;
+//   phone: string;
+//   address: string;
+//   district: string;
+//   area: string;
+//   weight: string;
+//   category: string;
+//   cod: string;
+//   instructions: string;
+// }
+
+// interface PriceMatrixEntry {
+//   basePrice: number;
+//   perKg: number;
+// }
+
+// interface PriceMatrix {
+//   [key: string]: PriceMatrixEntry;
+// }
+
+// interface TrackingStep {
+//   step: string;
+//   completed: boolean;
+// }
+
+// interface CoverageArea {
+//   district: string;
+//   coverage: string;
+//   areas: string;
+// }
+
+const MerchantDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const [activeModule, setActiveModule] = useState<string>('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [parcels, ] = useState<Parcel[]>([
     { id: 'PCL001', customer: 'John Doe', destination: 'Dhaka', status: 'In Transit', date: '2025-12-20', phone: '01712345678' },
     { id: 'PCL002', customer: 'Jane Smith', destination: 'Chattogram', status: 'Delivered', date: '2025-12-19', phone: '01812345678' },
     { id: 'PCL003', customer: 'Mike Johnson', destination: 'Sylhet', status: 'Pickup Pending', date: '2025-12-22', phone: '01912345678' },
     { id: 'PCL004', customer: 'Sarah Ahmed', destination: 'Khulna', status: 'In Transit', date: '2025-12-21', phone: '01612345678' },
     { id: 'PCL005', customer: 'Rahim Khan', destination: 'Rajshahi', status: 'Delivered', date: '2025-12-18', phone: '01512345678' }
   ]);
+  const [parcelModal, setParcelModal] = useState<Parcel | null>(null);
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
     { id: 'add-parcel', label: 'Add Parcel', icon: Plus },
     { id: 'consignments', label: 'Consignments', icon: List },
@@ -112,8 +190,8 @@ const MerchantDashboard = () => {
     </div>
   );
 
-  const AddParcelModule = () => {
-    const [formData, setFormData] = useState({
+  const AddParcelModule: React.FC = () => {
+    const [formData, setFormData] = useState<AddParcelFormData>({
       customerName: '',
       phone: '',
       address: '',
@@ -125,7 +203,7 @@ const MerchantDashboard = () => {
       instructions: ''
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       console.log('Form submitted:', formData);
       alert('Parcel request submitted successfully!');
@@ -291,11 +369,11 @@ const MerchantDashboard = () => {
     );
   };
 
-  const ConsignmentsModule = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+  const ConsignmentsModule: React.FC = () => {
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('');
 
-    const filteredParcels = parcels.filter(parcel => {
+    const filteredParcels = parcels.filter((parcel) => {
       const matchesSearch = parcel.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            parcel.customer.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = !statusFilter || parcel.status === statusFilter;
@@ -358,7 +436,7 @@ const MerchantDashboard = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-blue-600 hover:text-blue-900 font-medium">View Details</button>
+                    <button onClick={() => setParcelModal(parcel)} className="text-blue-600 hover:text-blue-900 font-medium">View Details</button>
                   </td>
                 </tr>
               ))}
@@ -374,11 +452,11 @@ const MerchantDashboard = () => {
     );
   };
 
-  const AddMoneyModule = () => {
-    const [amount, setAmount] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('');
+  const AddMoneyModule: React.FC = () => {
+    const [amount, setAmount] = useState<string>('');
+    const [paymentMethod, setPaymentMethod] = useState<string>('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       console.log('Payment submitted:', { amount, paymentMethod });
       alert(`Payment of ৳${amount} via ${paymentMethod} submitted successfully!`);
@@ -477,12 +555,12 @@ const MerchantDashboard = () => {
     );
   };
 
-  const PricingCalculatorModule = () => {
-    const [weight, setWeight] = useState('');
-    const [district, setDistrict] = useState('');
-    const [calculatedPrice, setCalculatedPrice] = useState(null);
+  const PricingCalculatorModule: React.FC = () => {
+    const [weight, setWeight] = useState<string>('');
+    const [district, setDistrict] = useState<string>('');
+    const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
 
-    const priceMatrix = {
+    const priceMatrix: PriceMatrix = {
       'Dhaka': { basePrice: 60, perKg: 10 },
       'Chattogram': { basePrice: 80, perKg: 12 },
       'Sylhet': { basePrice: 100, perKg: 15 },
@@ -493,7 +571,7 @@ const MerchantDashboard = () => {
       'Mymensingh': { basePrice: 85, perKg: 12 }
     };
 
-    const calculatePrice = (w, d) => {
+    const calculatePrice = (w: string, d: string) => {
       if (w && d && priceMatrix[d]) {
         const { basePrice, perKg } = priceMatrix[d];
         const totalPrice = basePrice + (parseFloat(w) * perKg);
@@ -501,13 +579,13 @@ const MerchantDashboard = () => {
       }
     };
 
-    const handleWeightChange = (e) => {
+    const handleWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const w = e.target.value;
       setWeight(w);
       calculatePrice(w, district);
     };
 
-    const handleDistrictChange = (e) => {
+    const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const d = e.target.value;
       setDistrict(d);
       calculatePrice(weight, d);
@@ -589,17 +667,17 @@ const MerchantDashboard = () => {
     );
   };
 
-  const TrackParcelModule = () => {
-    const [trackingId, setTrackingId] = useState('');
-    const [trackedParcel, setTrackedParcel] = useState(null);
+  const TrackParcelModule: React.FC = () => {
+    const [trackingId, setTrackingId] = useState<string>('');
+    const [trackedParcel, setTrackedParcel] = useState<Parcel | null>(null);
 
-    const handleTrack = (e) => {
+    const handleTrack = (e: React.FormEvent) => {
       e.preventDefault();
-      const found = parcels.find(p => p.id.toLowerCase() === trackingId.toLowerCase());
+      const found = parcels.find((p) => p.id.toLowerCase() === trackingId.toLowerCase());
       setTrackedParcel(found || null);
     };
 
-    const trackingSteps = {
+    const trackingSteps: Record<string, TrackingStep[]> = {
       'Pickup Pending': [
         { step: 'Order Placed', completed: true },
         { step: 'Pickup Scheduled', completed: false },
@@ -712,8 +790,8 @@ const MerchantDashboard = () => {
     );
   };
 
-  const CoverageAreaModule = () => {
-    const coverageAreas = [
+  const CoverageAreaModule: React.FC = () => {
+    const coverageAreas: { district: string; coverage: string; areas: string }[] = [
       { district: 'Dhaka', coverage: '95%', areas: 'Gulshan, Dhanmondi, Mirpur, Uttara, Banani, Kallyanpur, Motijheel' },
       { district: 'Chattogram', coverage: '88%', areas: 'Halishahar, Nasirabad, GEC, Agrabad, Bayazid' },
       { district: 'Sylhet', coverage: '75%', areas: 'Zindabazar, Ambarkhana, Chouhatta, Kazipur' },
@@ -800,8 +878,13 @@ const MerchantDashboard = () => {
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-linear-to-b from-green-600 to-green-700 text-white transition-all duration-300 flex flex-col`}>
         <div className="p-4 flex items-center justify-between border-b border-green-500">
-          {sidebarOpen && <h1 className="text-xl font-bold">CourierPro</h1>}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-green-500 rounded-lg">
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate('/')} className="p-2 hover:bg-green-500 rounded-lg transition-colors" title="Back to Home">
+              <Home size={20} />
+            </button>
+            {sidebarOpen && <h1 className="text-xl font-bold">CourierPro</h1>}
+          </div>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-green-500 rounded-lg transition-colors">
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
@@ -842,6 +925,49 @@ const MerchantDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6">
         {renderModule()}
+
+        {/* Parcel Details Modal */}
+        {parcelModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setParcelModal(null)}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Parcel Details — {parcelModal.id}</h3>
+                <button onClick={() => setParcelModal(null)} className="text-gray-500 hover:text-gray-800"><X size={20} /></button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Parcel ID</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Customer</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.customer}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Destination</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.destination}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.phone ?? '—'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.status}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Date</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.date}</p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <button onClick={() => setParcelModal(null)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Close</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
