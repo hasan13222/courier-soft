@@ -23,14 +23,15 @@ const RiderDashboard = () => {
   const [activeModule, setActiveModule] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [deliveries, setDeliveries] = useState<Array<any>>([
-    { id: 'DEL001', recipient: 'John Doe', address: 'House 12, Gulshan', phone: '01712345678', status: 'Pending', distance: '2.3 km', amount: '৳50' },
-    { id: 'DEL002', recipient: 'Jane Smith', address: 'Apartment 5B, Banani', phone: '01812345678', status: 'In Progress', distance: '1.5 km', amount: '৳75' },
-    { id: 'DEL003', recipient: 'Mike Johnson', address: 'Office 201, Dhanmondi', phone: '01912345678', status: 'Completed', distance: '0 km', amount: '৳60' },
-    { id: 'DEL004', recipient: 'Sarah Ahmed', address: 'House 45, Mirpur', phone: '01612345678', status: 'Pending', distance: '3.1 km', amount: '৳80' },
-    { id: 'DEL005', recipient: 'Rahim Khan', address: 'Shop 3, Motijheel', phone: '01512345678', status: 'In Progress', distance: '0.8 km', amount: '৳55' }
+    { id: 'DEL001', type: 'delivery', recipient: 'John Doe', address: 'House 12, Gulshan', phone: '01712345678', status: 'Pending', distance: '2.3 km', amount: '৳50' },
+    { id: 'DEL002', type: 'delivery', recipient: 'Jane Smith', address: 'Apartment 5B, Banani', phone: '01812345678', status: 'In Progress', distance: '1.5 km', amount: '৳75' },
+    { id: 'DEL003', type: 'delivery', recipient: 'Mike Johnson', address: 'Office 201, Dhanmondi', phone: '01912345678', status: 'Completed', distance: '0 km', amount: '৳60' },
+    { id: 'DEL004', type: 'pickup', sender: 'Sarah Ahmed', address: 'House 45, Mirpur', phone: '01612345678', status: 'Pending', distance: '3.1 km', amount: '৳80' },
+    { id: 'DEL005', type: 'delivery', recipient: 'Rahim Khan', address: 'Shop 3, Motijheel', phone: '01512345678', status: 'In Progress', distance: '0.8 km', amount: '৳55' },
+    { id: 'PIC001', type: 'pickup', sender: 'Ahmed Store', address: 'Shop 10, Kawran Bazar', phone: '01234567890', status: 'Pending', distance: '2.5 km', amount: '৳45' }
   ]);
 
-  const [earnings, ] = useState<{ today: number; weekly: number; monthly: number; balance: number }>({
+  const [earnings,] = useState<{ today: number; weekly: number; monthly: number; balance: number }>({
     today: 650,
     weekly: 3500,
     monthly: 15000,
@@ -40,6 +41,8 @@ const RiderDashboard = () => {
   const [selectedDelivery, setSelectedDelivery] = useState<any | null>(null);
   const [otpForId, setOtpForId] = useState<string | null>(null);
   const [otpValue, setOtpValue] = useState<string>('');
+  const [failForId, setFailForId] = useState<string | null>(null);
+  const [failReason, setFailReason] = useState<string>('');
 
   const handleViewDelivery = (delivery: any): void => {
     setSelectedDelivery(delivery);
@@ -47,15 +50,18 @@ const RiderDashboard = () => {
     setOtpValue('');
   };
   const [deliveryHistory, setDeliveryHistory] = useState<Array<any>>([
-    { id: 'DEL-DEC-001', recipient: 'Karim Hassan', address: 'Dhaka', status: 'Completed', date: '2025-12-22', amount: '৳50' },
-    { id: 'DEL-DEC-002', recipient: 'Farhana Rani', address: 'Chattogram', status: 'Completed', date: '2025-12-21', amount: '৳75' },
-    { id: 'DEL-DEC-003', recipient: 'Akram Hussain', address: 'Dhaka', status: 'Completed', date: '2025-12-20', amount: '৳60' },
+    { id: 'DEL-DEC-001', type: 'delivery', recipient: 'Karim Hassan', address: 'Dhaka', status: 'Completed', date: '2025-12-22', amount: '৳50' },
+    { id: 'DEL-DEC-002', type: 'delivery', recipient: 'Farhana Rani', address: 'Chattogram', status: 'Completed', date: '2025-12-21', amount: '৳75' },
+    { id: 'DEL-DEC-003', type: 'delivery', recipient: 'Akram Hussain', address: 'Dhaka', status: 'Completed', date: '2025-12-20', amount: '৳60' },
+    { id: 'PIC-DEC-001', type: 'pickup', sender: 'Rahman Warehouse', address: 'Gazipur', status: 'Completed', date: '2025-12-21', amount: '৳45' },
+    { id: 'PIC-DEC-002', type: 'pickup', sender: 'Rana Store', address: 'Dhaka', status: 'Completed', date: '2025-12-19', amount: '৳55' }
   ]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
-    { id: 'active-deliveries', label: 'Active Deliveries', icon: Bike },
+    { id: 'active-orders', label: 'Active Orders', icon: Bike },
     { id: 'delivery-history', label: 'Delivery History', icon: CheckCircle },
+    { id: 'failed-history', label: 'Failed History', icon: AlertCircle },
     { id: 'earnings', label: 'Earnings', icon: DollarSign },
     { id: 'route-map', label: 'Route Map', icon: MapPin },
     { id: 'support', label: 'Support', icon: Phone },
@@ -110,26 +116,27 @@ const RiderDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800">Active Deliveries</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Active Orders</h3>
           <div className="space-y-3">
-            {deliveries.filter(d => d.status !== 'Completed').slice(0, 4).map(delivery => (
-              <div key={delivery.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer" onClick={() => handleViewDelivery(delivery)}>
+            {deliveries.filter(d => d.status !== 'Completed' && d.status !== 'Failed').slice(0, 4).map(item => (
+              <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer" onClick={() => handleViewDelivery(item)}>
                 <div className="flex items-center space-x-3 flex-1">
-                  <Bike className="text-orange-500" size={20} />
+                  {item.type === 'delivery' ? (
+                    <Bike className="text-orange-500" size={20} />
+                  ) : (
+                    <Package className="text-purple-500" size={20} />
+                  )}
                   <div>
-                    <p className="font-medium text-gray-800">{delivery.id}</p>
-                    <p className="text-sm text-gray-500">{delivery.recipient}</p>
+                    <p className="font-medium text-gray-800">{item.id}</p>
+                    <p className="text-sm text-gray-500">{item.type === 'delivery' ? item.recipient : item.sender}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    delivery.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                    delivery.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {delivery.status}
+                  <span className={`px-3 py-1 text-nowrap rounded-full text-xs font-medium ${item.type === 'delivery' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                    }`}>
+                    {item.type === 'delivery' ? '🚚 Delivery' : '📦 Pickup'}
                   </span>
-                  <p className="text-sm font-semibold text-gray-800 mt-1">{delivery.amount}</p>
+                  <p className="text-sm font-semibold text-gray-800 mt-1">{item.amount}</p>
                 </div>
               </div>
             ))}
@@ -159,7 +166,7 @@ const RiderDashboard = () => {
         </div>
       </div>
 
-      
+
     </div>
   );
 
@@ -167,18 +174,24 @@ const RiderDashboard = () => {
     const [filter, setFilter] = useState('all');
 
     const handleStartDelivery = (deliveryId: string): void => {
-      setDeliveries(prev => prev.map(d => 
+      setDeliveries(prev => prev.map(d =>
         d.id === deliveryId ? { ...d, status: 'In Progress' } : d
       ));
+    };
+
+    const getDisplayName = (item: any) => {
+      return item.type === 'delivery' ? item.recipient : item.sender;
     };
 
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Active Deliveries</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Active Pickups & Deliveries</h2>
           <div className="flex gap-2">
             <select value={filter} onChange={(e) => setFilter(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
               <option value="all">All Active</option>
+              <option value="delivery">Deliveries</option>
+              <option value="pickup">Pickups</option>
               <option value="pending">Pending</option>
               <option value="in-progress">In Progress</option>
             </select>
@@ -189,8 +202,9 @@ const RiderDashboard = () => {
           <table className="w-full">
             <thead className="bg-gray-100 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Delivery ID</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Recipient</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">ID</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Type</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Contact Name</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Address</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Status</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Distance</th>
@@ -199,39 +213,53 @@ const RiderDashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {deliveries.filter(d => d.status !== 'Completed' && (filter === 'all' || d.status.toLowerCase().replace(' ', '-') === filter)).map(delivery => (
-                <tr key={delivery.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm font-medium text-gray-800">{delivery.id}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{delivery.recipient}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{delivery.address}</td>
+              {deliveries.filter(d => {
+                if (d.status === 'Completed' || d.status === 'Failed') return false;
+                if (filter === 'all') return true;
+                if (filter === 'delivery') return d.type === 'delivery';
+                if (filter === 'pickup') return d.type === 'pickup';
+                if (filter === 'pending') return d.status === 'Pending';
+                if (filter === 'in-progress') return d.status === 'In Progress';
+                return true;
+              }).map(item => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3 text-sm font-medium text-gray-800">{item.id}</td>
                   <td className="px-6 py-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      delivery.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                      delivery.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {delivery.status}
+                    <span className={`px-3 py-1 text-nowrap rounded-full text-xs font-medium ${item.type === 'delivery' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                      {item.type === 'delivery' ? '🚚 Delivery' : '📦 Pickup'}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{delivery.distance}</td>
-                  <td className="px-6 py-3 text-sm font-semibold text-orange-600">{delivery.amount}</td>
-                    <td className="px-6 py-3 text-sm">
-                      {delivery.status === 'Pending' ? (
-                        <button 
-                          onClick={() => handleStartDelivery(delivery.id)} 
-                          className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors font-medium"
-                        >
-                          Start
-                        </button>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => handleViewDelivery(delivery)} className="text-blue-600 hover:text-blue-800 font-medium">View</button>
-                          <button onClick={() => { setOtpForId(delivery.id); setOtpValue(''); }} className="text-green-600 hover:text-green-800 font-medium">Complete</button>
-                        </div>
-                      )}
+                  <td className="px-6 py-3 text-sm text-gray-700">{getDisplayName(item)}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.address}</td>
+                  <td className="px-6 py-3">
+                    <span className={`px-3 py-1 text-nowrap rounded-full text-xs font-medium ${item.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                        item.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                          'bg-yellow-100 text-yellow-700'
+                      }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.distance}</td>
+                  <td className="px-6 py-3 text-sm font-semibold text-orange-600">{item.amount}</td>
+                  <td className="px-6 py-3 text-sm">
+                    {item.status === 'Pending' ? (
+                      <button
+                        onClick={() => handleStartDelivery(item.id)}
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors font-medium"
+                      >
+                        Start
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => handleViewDelivery(item)} className="text-blue-600 hover:text-blue-800 font-medium">View</button>
+                        <button onClick={() => { setOtpForId(item.id); setOtpValue(''); }} className="text-green-600 hover:text-green-800 font-medium">Complete</button>
+                        <button onClick={() => { setFailForId(item.id); setFailReason(''); }} className="text-red-600 hover:text-red-800 font-medium">Fail</button>
+                      </div>
+                    )}
 
-                      
-                    </td>
+
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -243,16 +271,101 @@ const RiderDashboard = () => {
 
   const DeliveryHistoryModule = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState('all');
+
+    const getDisplayName = (item: any) => {
+      return item.type === 'delivery' ? item.recipient : item.sender;
+    };
 
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-800">Delivery History</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Pickup & Delivery History</h2>
+          <div className="flex gap-2">
+            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500">
+              <option value="all">All</option>
+              <option value="delivery">Deliveries</option>
+              <option value="pickup">Pickups</option>
+            </select>
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search history..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-100 border-b">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">ID</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Type</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Contact Name</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Location</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Date</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Amount</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Reason</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {deliveryHistory.filter(item => {
+                const matchesSearch = item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  getDisplayName(item).toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesType = filterType === 'all' || item.type === filterType;
+                return matchesSearch && matchesType;
+              }).map(item => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3 text-sm font-medium text-gray-800">{item.id}</td>
+                  <td className="px-6 py-3">
+                    <span className={`px-3 py-1 text-nowrap rounded-full text-xs font-medium ${item.type === 'delivery' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                      {item.type === 'delivery' ? '🚚 Delivery' : '📦 Pickup'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{getDisplayName(item)}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.address}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.date}</td>
+                  <td className="px-6 py-3 text-sm font-semibold text-orange-600">{item.amount}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.reason ?? '-'}</td>
+                  <td className="px-6 py-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === "Failed" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"} `}>
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const FailedHistoryModule = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const getDisplayName = (item: any) => {
+      return item.type === 'delivery' ? item.recipient : item.sender;
+    };
+
+    const failedItems = deliveryHistory.filter(item => item.status === 'Failed');
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-800">Failed Orders</h2>
           <div className="relative">
             <Search size={18} className="absolute left-3 top-3 text-gray-400" />
             <input
               type="text"
-              placeholder="Search deliveries..."
+              placeholder="Search failed orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
@@ -264,28 +377,37 @@ const RiderDashboard = () => {
           <table className="w-full">
             <thead className="bg-gray-100 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Delivery ID</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Recipient</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">ID</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Type</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Contact Name</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Location</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Date</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Amount</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Reason</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {deliveryHistory.filter(d => 
-                d.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                d.recipient.toLowerCase().includes(searchTerm.toLowerCase())
-              ).map(delivery => (
-                <tr key={delivery.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm font-medium text-gray-800">{delivery.id}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{delivery.recipient}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{delivery.address}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{delivery.date}</td>
-                  <td className="px-6 py-3 text-sm font-semibold text-orange-600">{delivery.amount}</td>
+              {failedItems.filter(item => {
+                const matchesSearch = item.id.toLowerCase().includes(searchTerm.toLowerCase()) || getDisplayName(item).toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesSearch;
+              }).map(item => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-3 text-sm font-medium text-gray-800">{item.id}</td>
                   <td className="px-6 py-3">
-                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                      {delivery.status}
+                    <span className={`px-3 py-1 text-nowrap rounded-full text-xs font-medium ${item.type === 'delivery' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                      {item.type === 'delivery' ? '🚚 Delivery' : '📦 Pickup'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{getDisplayName(item)}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.address}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.date}</td>
+                  <td className="px-6 py-3 text-sm font-semibold text-orange-600">{item.amount}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.reason ?? '-'}</td>
+                  <td className="px-6 py-3">
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                      {item.status}
                     </span>
                   </td>
                 </tr>
@@ -439,7 +561,7 @@ const RiderDashboard = () => {
   };
 
   const SupportModule = () => {
-    const [supportTickets, ] = useState([
+    const [supportTickets,] = useState([
       { id: 'TKT001', subject: 'Payment Issue', status: 'Open', date: '2025-12-22' },
       { id: 'TKT002', subject: 'Delivery Route Error', status: 'Resolved', date: '2025-12-20' },
       { id: 'TKT003', subject: 'App Bug Report', status: 'In Progress', date: '2025-12-21' },
@@ -485,11 +607,10 @@ const RiderDashboard = () => {
                   <p className="font-medium text-gray-800">{ticket.subject}</p>
                   <p className="text-sm text-gray-500">Ticket #{ticket.id} - {ticket.date}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  ticket.status === 'Resolved' ? 'bg-green-100 text-green-700' :
-                  ticket.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                  'bg-yellow-100 text-yellow-700'
-                }`}>
+                <span className={`px-3 py-1 text-nowrap rounded-full text-xs font-medium ${ticket.status === 'Resolved' ? 'bg-green-100 text-green-700' :
+                    ticket.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                      'bg-yellow-100 text-yellow-700'
+                  }`}>
                   {ticket.status}
                 </span>
               </div>
@@ -541,7 +662,7 @@ const RiderDashboard = () => {
                   <input
                     type="checkbox"
                     checked={value}
-                    onChange={() => setNotificationSettings({...notificationSettings, [key]: !value})}
+                    onChange={() => setNotificationSettings({ ...notificationSettings, [key]: !value })}
                     className="w-5 h-5 text-orange-600 rounded"
                   />
                 </label>
@@ -583,10 +704,11 @@ const RiderDashboard = () => {
   };
 
   const renderModule = () => {
-    switch(activeModule) {
+    switch (activeModule) {
       case 'dashboard': return <DashboardModule />;
-      case 'active-deliveries': return <ActiveDeliveriesModule />;
+      case 'active-orders': return <ActiveDeliveriesModule />;
       case 'delivery-history': return <DeliveryHistoryModule />;
+      case 'failed-history': return <FailedHistoryModule />;
       case 'earnings': return <EarningsModule />;
       case 'route-map': return <RouteMapModule />;
       case 'support': return <SupportModule />;
@@ -618,9 +740,8 @@ const RiderDashboard = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveModule(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                  activeModule === item.id ? 'bg-green-800' : 'hover:bg-green-500'
-                }`}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeModule === item.id ? 'bg-green-800' : 'hover:bg-green-500'
+                  }`}
               >
                 <Icon size={20} />
                 {sidebarOpen && <span className="font-medium">{item.label}</span>}
@@ -650,19 +771,31 @@ const RiderDashboard = () => {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDelivery(null)}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Selected Delivery Details</h3>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {selectedDelivery.type === 'delivery' ? 'Delivery' : 'Pickup'} Details
+                </h3>
                 <button onClick={() => setSelectedDelivery(null)} className="text-gray-500 hover:text-gray-800">
                   <X size={20} />
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-600">Delivery ID</p>
+                  <p className="text-sm text-gray-600">ID</p>
                   <p className="text-lg font-semibold text-gray-800">{selectedDelivery.id}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Recipient</p>
-                  <p className="text-lg font-semibold text-gray-800">{selectedDelivery.recipient}</p>
+                  <p className="text-sm text-gray-600">Type</p>
+                  <p className="text-lg font-semibold text-gray-800">
+                    {selectedDelivery.type === 'delivery' ? '🚚 Delivery' : '📦 Pickup'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">
+                    {selectedDelivery.type === 'delivery' ? 'Recipient' : 'Sender'}
+                  </p>
+                  <p className="text-lg font-semibold text-gray-800">
+                    {selectedDelivery.type === 'delivery' ? selectedDelivery.recipient : selectedDelivery.sender}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Address</p>
@@ -680,9 +813,13 @@ const RiderDashboard = () => {
                   <p className="text-sm text-gray-600">Amount</p>
                   <p className="text-lg font-semibold text-orange-600">{selectedDelivery.amount}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <p className="text-lg font-semibold text-gray-800">{selectedDelivery.status}</p>
+                </div>
               </div>
               <div className="mt-4">
-                <p className="text-sm text-gray-500">Actions available from the Active Deliveries list.</p>
+                <p className="text-sm text-gray-500">Actions available from the Active Pickups & Deliveries list.</p>
               </div>
             </div>
           </div>
@@ -706,14 +843,72 @@ const RiderDashboard = () => {
                 <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700" onClick={() => {
                   const id = otpForId;
                   if (!id) return;
+                  const completedItem = deliveries.find(d => d.id === id);
                   setDeliveries(prev => prev.map(d => d.id === id ? { ...d, status: 'Completed' } : d));
-                  const completed = deliveries.find(d => d.id === id) ?? { id, recipient: '', address: '', amount: '' };
-                  setDeliveryHistory(prev => [{ id: completed.id ?? id, recipient: completed.recipient ?? '', address: completed.address ?? '', status: 'Completed', date: new Date().toLocaleDateString(), amount: completed.amount ?? '' }, ...prev]);
+                  if (completedItem) {
+                    setDeliveryHistory(prev => [{
+                      id: completedItem.id,
+                      type: completedItem.type,
+                      ...(completedItem.type === 'delivery'
+                        ? { recipient: completedItem.recipient }
+                        : { sender: completedItem.sender }
+                      ),
+                      address: completedItem.address,
+                      status: 'Completed',
+                      date: new Date().toLocaleDateString(),
+                      amount: completedItem.amount
+                    }, ...prev]);
+                  }
                   setOtpForId(null);
                   setOtpValue('');
                   if (selectedDelivery?.id === id) setSelectedDelivery(null);
                 }}>Confirm</button>
                 <button className="bg-gray-200 px-4 py-2 rounded-lg" onClick={() => { setOtpForId(null); setOtpValue(''); }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {failForId && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setFailForId(null)}>
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Fail Order</h3>
+                <button onClick={() => setFailForId(null)} className="text-gray-500 hover:text-gray-800"><X size={20} /></button>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Provide a short reason why the pickup/delivery failed.</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={failReason}
+                  onChange={(e) => setFailReason(e.target.value)}
+                  placeholder="Reason for failure"
+                  className="px-3 py-2 border border-gray-300 rounded-lg flex-1"
+                />
+                <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700" onClick={() => {
+                  const id = failForId;
+                  if (!id) return;
+                  const failedItem = deliveries.find(d => d.id === id);
+                  setDeliveries(prev => prev.map(d => d.id === id ? { ...d, status: 'Failed' } : d));
+                  if (failedItem) {
+                    setDeliveryHistory(prev => [{
+                      id: failedItem.id,
+                      type: failedItem.type,
+                      ...(failedItem.type === 'delivery'
+                        ? { recipient: failedItem.recipient }
+                        : { sender: failedItem.sender }
+                      ),
+                      address: failedItem.address,
+                      status: 'Failed',
+                      reason: failReason || 'No reason provided',
+                      date: new Date().toLocaleDateString(),
+                      amount: failedItem.amount
+                    }, ...prev]);
+                  }
+                  setFailForId(null);
+                  setFailReason('');
+                  if (selectedDelivery?.id === id) setSelectedDelivery(null);
+                }}>Confirm</button>
+                <button className="bg-gray-200 px-4 py-2 rounded-lg" onClick={() => { setFailForId(null); setFailReason(''); }}>Cancel</button>
               </div>
             </div>
           </div>

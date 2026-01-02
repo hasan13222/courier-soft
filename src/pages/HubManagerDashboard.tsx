@@ -37,7 +37,7 @@ const statusPill = (status: string) => {
   if (["Arrived", "In Hub", "Delivered"].includes(status))
     return `${base} bg-green-100 text-green-800`;
   if (["Arriving", "Ready"].includes(status)) return `${base} bg-blue-100 text-blue-800`;
-  if (["In Transit", "Pending Transfer"].includes(status))
+  if (["Not Picked", "Pending Transfer"].includes(status))
     return `${base} bg-yellow-100 text-yellow-800`;
   if (["Dispatched", "On Delivery"].includes(status))
     return `${base} bg-purple-100 text-purple-800`;
@@ -141,12 +141,12 @@ const HubManagerDashboard: React.FC = () => {
       id: "PCL003",
       origin: "Chattogram District",
       destination: "Dhaka Central",
-      status: "In Transit",
+      status: "Not Picked",
       eta: "4:00 PM",
       rider: "Jalal",
       weight: "3.2kg",
       type: "District Transfer",
-      logs: [{ at: "9:20 AM", note: "Left district hub", status: "In Transit" }],
+      logs: [{ at: "9:20 AM", note: "Left district hub", status: "Not Picked" }],
     },
   ]);
 
@@ -721,7 +721,7 @@ const HubManagerDashboard: React.FC = () => {
               <option value="">All Status</option>
               <option value="Arriving">Arriving</option>
               <option value="Arrived">Arrived</option>
-              <option value="In Transit">In Transit</option>
+              <option value="Not Picked">Not Picked</option>
             </select>
             <button
               onClick={() => setScanModalOpen(true)}
