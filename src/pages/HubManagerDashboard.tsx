@@ -151,6 +151,7 @@ const HubManagerDashboard: React.FC = () => {
   ]);
 
   // Inventory means physically in this hub warehouse (sorted/scanned)
+  // vercel error fix
   const [inventoryParcels, setInventoryParcels] = useState<InventoryParcel[]>([
     {
       id: "PCL100",
