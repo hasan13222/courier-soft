@@ -9,6 +9,10 @@ type Parcel = {
   status: 'In Transit' | 'Delivered' | 'Pickup Pending' | string;
   date: string;
   phone?: string;
+  courierCharge: number;
+  courierChargeStatus: 'paid' | 'due';
+  isCOD: boolean;
+  codAmount?: number;
 };
 
 type MenuItem = { id: string; label: string; icon: React.ComponentType<any> };
@@ -29,64 +33,42 @@ type PriceMatrix = Record<string, { basePrice: number; perKg: number }>;
 
 type TrackingStep = { step: string; completed: boolean };
 
-// Interfaces
-// interface Parcel {
-//   id: string;
-//   customer: string;
-//   destination: string;
-//   status: 'In Transit' | 'Delivered' | 'Pickup Pending';
-//   date: string;
-//   phone: string;
-// }
-
-// interface MenuItem {
-//   id: string;
-//   label: string;
-//   icon: React.ComponentType<{ size?: number }>;
-// }
-
-// interface AddParcelFormData {
-//   customerName: string;
-//   phone: string;
-//   address: string;
-//   district: string;
-//   area: string;
-//   weight: string;
-//   category: string;
-//   cod: string;
-//   instructions: string;
-// }
-
-// interface PriceMatrixEntry {
-//   basePrice: number;
-//   perKg: number;
-// }
-
-// interface PriceMatrix {
-//   [key: string]: PriceMatrixEntry;
-// }
-
-// interface TrackingStep {
-//   step: string;
-//   completed: boolean;
-// }
-
-// interface CoverageArea {
-//   district: string;
-//   coverage: string;
-//   areas: string;
-// }
-
 const MerchantDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeModule, setActiveModule] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
-  const [parcels, ] = useState<Parcel[]>([
-    { id: 'PCL001', customer: 'John Doe', destination: 'Dhaka', status: 'In Transit', date: '2025-12-20', phone: '01712345678' },
-    { id: 'PCL002', customer: 'Jane Smith', destination: 'Chattogram', status: 'Delivered', date: '2025-12-19', phone: '01812345678' },
-    { id: 'PCL003', customer: 'Mike Johnson', destination: 'Sylhet', status: 'Pickup Pending', date: '2025-12-22', phone: '01912345678' },
-    { id: 'PCL004', customer: 'Sarah Ahmed', destination: 'Khulna', status: 'In Transit', date: '2025-12-21', phone: '01612345678' },
-    { id: 'PCL005', customer: 'Rahim Khan', destination: 'Rajshahi', status: 'Delivered', date: '2025-12-18', phone: '01512345678' }
+  const [parcels,] = useState<Parcel[]>([
+    {
+      id: 'PCL001', customer: 'John Doe', destination: 'Dhaka', status: 'In Transit', date: '2025-12-20', phone: '01712345678',
+      courierCharge: 100,
+      courierChargeStatus: 'paid',
+      isCOD: false
+    },
+    {
+      id: 'PCL002', customer: 'Jane Smith', destination: 'Chattogram', status: 'Delivered', date: '2025-12-19', phone: '01812345678',
+      courierCharge: 100,
+      courierChargeStatus: 'paid',
+      isCOD: false
+    },
+    {
+      id: 'PCL003', customer: 'Mike Johnson', destination: 'Sylhet', status: 'Pickup Pending', date: '2025-12-22', phone: '01912345678',
+      courierCharge: 100,
+      courierChargeStatus: 'paid',
+      isCOD: false
+    },
+    {
+      id: 'PCL004', customer: 'Sarah Ahmed', destination: 'Khulna', status: 'In Transit', date: '2025-12-21', phone: '01612345678',
+      courierCharge: 100,
+      courierChargeStatus: 'due',
+      isCOD: false
+    },
+    {
+      id: 'PCL005', customer: 'Rahim Khan', destination: 'Rajshahi', status: 'Delivered', date: '2025-12-18', phone: '01512345678',
+      courierCharge: 100,
+      courierChargeStatus: 'due',
+      isCOD: true,
+      codAmount: 1500
+    }
   ]);
   const [parcelModal, setParcelModal] = useState<Parcel | null>(null);
 
@@ -103,7 +85,7 @@ const MerchantDashboard: React.FC = () => {
   const DashboardModule = () => (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
@@ -160,11 +142,10 @@ const MerchantDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    parcel.status === 'Delivered' ? 'bg-green-100 text-green-700' :
-                    parcel.status === 'In Transit' ? 'bg-blue-100 text-blue-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${parcel.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                      parcel.status === 'In Transit' ? 'bg-blue-100 text-blue-700' :
+                        'bg-yellow-100 text-yellow-700'
+                    }`}>
                     {parcel.status}
                   </span>
                 </div>
@@ -230,36 +211,36 @@ const MerchantDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Customer Name *</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 value={formData.customerName}
-                onChange={(e) => setFormData({...formData, customerName: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="Enter customer name" 
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter customer name"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-              <input 
-                type="tel" 
+              <input
+                type="tel"
                 required
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="01XXXXXXXXX" 
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="01XXXXXXXXX"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Address *</label>
-            <textarea 
+            <textarea
               required
               value={formData.address}
-              onChange={(e) => setFormData({...formData, address: e.target.value})}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-              rows={3} 
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={3}
               placeholder="Enter full delivery address"
             ></textarea>
           </div>
@@ -267,10 +248,10 @@ const MerchantDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">District *</label>
-              <select 
+              <select
                 required
                 value={formData.district}
-                onChange={(e) => setFormData({...formData, district: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select District</option>
@@ -286,10 +267,10 @@ const MerchantDashboard: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Area/Hub *</label>
-              <select 
+              <select
                 required
                 value={formData.area}
-                onChange={(e) => setFormData({...formData, area: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Area</option>
@@ -305,23 +286,23 @@ const MerchantDashboard: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg) *</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 value={formData.weight}
-                onChange={(e) => setFormData({...formData, weight: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="0.5" 
-                step="0.1" 
+                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0.5"
+                step="0.1"
                 min="0.1"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-              <select 
+              <select
                 required
                 value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select Category</option>
@@ -334,12 +315,12 @@ const MerchantDashboard: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">COD Amount (৳)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={formData.cod}
-                onChange={(e) => setFormData({...formData, cod: e.target.value})}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="0" 
+                onChange={(e) => setFormData({ ...formData, cod: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0"
                 min="0"
               />
             </div>
@@ -347,11 +328,11 @@ const MerchantDashboard: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Special Instructions</label>
-            <textarea 
+            <textarea
               value={formData.instructions}
-              onChange={(e) => setFormData({...formData, instructions: e.target.value})}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-              rows={2} 
+              onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={2}
               placeholder="Any special handling instructions"
             ></textarea>
           </div>
@@ -375,7 +356,7 @@ const MerchantDashboard: React.FC = () => {
 
     const filteredParcels = parcels.filter((parcel) => {
       const matchesSearch = parcel.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           parcel.customer.toLowerCase().includes(searchTerm.toLowerCase());
+        parcel.customer.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = !statusFilter || parcel.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -385,14 +366,14 @@ const MerchantDashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-gray-800">All Consignments</h2>
           <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by ID or customer" 
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full md:w-64" 
+              placeholder="Search by ID or customer"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full md:w-64"
             />
-            <select 
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -404,7 +385,7 @@ const MerchantDashboard: React.FC = () => {
             </select>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -427,11 +408,10 @@ const MerchantDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{parcel.destination}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{parcel.date}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      parcel.status === 'Delivered' ? 'bg-green-100 text-green-800' :
-                      parcel.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${parcel.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                        parcel.status === 'In Transit' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {parcel.status}
                     </span>
                   </td>
@@ -469,7 +449,7 @@ const MerchantDashboard: React.FC = () => {
         {/* Form */}
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Add Money to Account</h2>
-          
+
           <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
             <p className="text-sm text-blue-800">Current Balance: <span className="font-bold text-lg">৳12,450</span></p>
           </div>
@@ -477,13 +457,13 @@ const MerchantDashboard: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Amount (৳) *</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="Enter amount" 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter amount"
                 min="100"
                 step="100"
               />
@@ -492,7 +472,7 @@ const MerchantDashboard: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
-              <select 
+              <select
                 required
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
@@ -596,16 +576,16 @@ const MerchantDashboard: React.FC = () => {
         {/* Calculator */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Pricing Calculator</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg) *</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 value={weight}
                 onChange={handleWeightChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                placeholder="Enter weight" 
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter weight"
                 step="0.1"
                 min="0.1"
               />
@@ -613,7 +593,7 @@ const MerchantDashboard: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Destination District *</label>
-              <select 
+              <select
                 value={district}
                 onChange={handleDistrictChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -702,14 +682,14 @@ const MerchantDashboard: React.FC = () => {
       <div className="space-y-6">
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Track Your Parcel</h2>
-          
+
           <form onSubmit={handleTrack} className="flex gap-2 mb-6">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={trackingId}
               onChange={(e) => setTrackingId(e.target.value)}
-              placeholder="Enter Parcel ID (e.g., PCL001)" 
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+              placeholder="Enter Parcel ID (e.g., PCL001)"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
               Track
@@ -744,9 +724,8 @@ const MerchantDashboard: React.FC = () => {
                 <div className="space-y-4">
                   {trackingSteps[trackedParcel.status]?.map((item, index) => (
                     <div key={index} className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        item.completed ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
-                      }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.completed ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'
+                        }`}>
                         {item.completed ? '✓' : index + 1}
                       </div>
                       <div className="flex-1">
@@ -817,10 +796,10 @@ const MerchantDashboard: React.FC = () => {
                     {area.coverage}
                   </span>
                 </div>
-                
+
                 <div className="mb-3">
                   <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div 
+                    <div
                       className="bg-green-500 h-full transition-all"
                       style={{ width: area.coverage }}
                     ></div>
@@ -861,7 +840,7 @@ const MerchantDashboard: React.FC = () => {
   };
 
   const renderModule = () => {
-    switch(activeModule) {
+    switch (activeModule) {
       case 'dashboard': return <DashboardModule />;
       case 'add-parcel': return <AddParcelModule />;
       case 'consignments': return <ConsignmentsModule />;
@@ -896,9 +875,8 @@ const MerchantDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveModule(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                  activeModule === item.id ? 'bg-green-800' : 'hover:bg-green-500'
-                }`}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeModule === item.id ? 'bg-green-800' : 'hover:bg-green-500'
+                  }`}
               >
                 <Icon size={20} />
                 {sidebarOpen && <span className="font-medium">{item.label}</span>}
@@ -960,6 +938,18 @@ const MerchantDashboard: React.FC = () => {
                   <p className="text-sm text-gray-600">Date</p>
                   <p className="text-lg font-semibold text-gray-800">{parcelModal.date}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-600">Courier Charge</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.courierCharge}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Pyament Status</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.courierChargeStatus}</p>
+                </div>
+                {parcelModal?.isCOD && <div>
+                  <p className="text-sm text-gray-600">Cash on Delivery Amount</p>
+                  <p className="text-lg font-semibold text-gray-800">{parcelModal.codAmount}</p>
+                </div>}
               </div>
 
               <div className="mt-4">

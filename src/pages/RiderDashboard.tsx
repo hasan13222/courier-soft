@@ -23,13 +23,79 @@ const RiderDashboard = () => {
   const [activeModule, setActiveModule] = useState<string>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [deliveries, setDeliveries] = useState<Array<any>>([
-    { id: 'DEL001', type: 'delivery', recipient: 'John Doe', address: 'House 12, Gulshan', phone: '01712345678', status: 'Pending', distance: '2.3 km', amount: '৳50' },
-    { id: 'DEL002', type: 'delivery', recipient: 'Jane Smith', address: 'Apartment 5B, Banani', phone: '01812345678', status: 'In Progress', distance: '1.5 km', amount: '৳75' },
-    { id: 'DEL003', type: 'delivery', recipient: 'Mike Johnson', address: 'Office 201, Dhanmondi', phone: '01912345678', status: 'Completed', distance: '0 km', amount: '৳60' },
-    { id: 'DEL004', type: 'pickup', sender: 'Sarah Ahmed', address: 'House 45, Mirpur', phone: '01612345678', status: 'Pending', distance: '3.1 km', amount: '৳80' },
-    { id: 'DEL005', type: 'delivery', recipient: 'Rahim Khan', address: 'Shop 3, Motijheel', phone: '01512345678', status: 'In Progress', distance: '0.8 km', amount: '৳55' },
-    { id: 'PIC001', type: 'pickup', sender: 'Ahmed Store', address: 'Shop 10, Kawran Bazar', phone: '01234567890', status: 'Pending', distance: '2.5 km', amount: '৳45' }
-  ]);
+  {
+    id: 'DEL001',
+    type: 'delivery',
+    recipient: 'John Doe',
+    address: 'House 12, Gulshan',
+    phone: '01712345678',
+    status: 'Pending',
+    distance: 2.3,
+    amount: 45,
+    courierCharge: 50,
+    paymentStatus: 'DUE'
+  },
+  {
+    id: 'DEL002',
+    type: 'delivery',
+    recipient: 'Jane Smith',
+    address: 'Apartment 5B, Banani',
+    phone: '01812345678',
+    status: 'In Progress',
+    distance: 1.5,
+    amount: 45,
+    courierCharge: 75,
+    paymentStatus: 'PAID'
+  },
+  {
+    id: 'DEL003',
+    type: 'delivery',
+    recipient: 'Mike Johnson',
+    address: 'Office 201, Dhanmondi',
+    phone: '01912345678',
+    status: 'Completed',
+    distance: 0,
+
+amount: 45,    courierCharge: 60,
+    paymentStatus: 'PAID'
+  },
+  {
+    id: 'DEL004',
+    type: 'pickup',
+    sender: 'Sarah Ahmed',
+    address: 'House 45, Mirpur',
+    phone: '01612345678',
+    status: 'Pending',
+    distance: 3.1,
+    amount: 45,
+    courierCharge: 80,
+    paymentStatus: 'DUE'
+  },
+  {
+    id: 'DEL005',
+    type: 'delivery',
+    recipient: 'Rahim Khan',
+    address: 'Shop 3, Motijheel',
+    phone: '01512345678',
+    status: 'In Progress',
+    distance: 0.8,
+    amount: 45,
+    courierCharge: 55,
+    paymentStatus: 'DUE'
+  },
+  {
+    id: 'PIC001',
+    type: 'pickup',
+    sender: 'Ahmed Store',
+    address: 'Shop 10, Kawran Bazar',
+    phone: '01234567890',
+    status: 'Pending',
+    distance: 2.5,
+    amount: 45,
+    courierCharge: 45,
+    paymentStatus: 'PAID'
+  }
+]);
 
   const [earnings,] = useState<{ today: number; weekly: number; monthly: number; balance: number }>({
     today: 650,
@@ -60,7 +126,7 @@ const RiderDashboard = () => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
     { id: 'active-orders', label: 'Active Orders', icon: Bike },
-    { id: 'delivery-history', label: 'Delivery History', icon: CheckCircle },
+    { id: 'delivery-history', label: 'Order History', icon: CheckCircle },
     { id: 'failed-history', label: 'Failed History', icon: AlertCircle },
     { id: 'earnings', label: 'Earnings', icon: DollarSign },
     { id: 'route-map', label: 'Route Map', icon: MapPin },
@@ -178,6 +244,11 @@ const RiderDashboard = () => {
         d.id === deliveryId ? { ...d, status: 'In Progress' } : d
       ));
     };
+    const handlePaidParcel = (deliveryId: string): void => {
+      setDeliveries(prev => prev.map(d =>
+        d.id === deliveryId ? { ...d, paymentStatus: 'PAID' } : d
+      ));
+    };
 
     const getDisplayName = (item: any) => {
       return item.type === 'delivery' ? item.recipient : item.sender;
@@ -198,7 +269,7 @@ const RiderDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white rounded-lg shadow-md overflow-auto">
           <table className="w-full">
             <thead className="bg-gray-100 border-b">
               <tr>
@@ -208,7 +279,9 @@ const RiderDashboard = () => {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Address</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Status</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Distance</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Amount</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Courier Charge</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Payment Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Rider Amount</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">Actions</th>
               </tr>
             </thead>
@@ -241,6 +314,7 @@ const RiderDashboard = () => {
                     </span>
                   </td>
                   <td className="px-6 py-3 text-sm text-gray-700">{item.distance}</td>
+                  <td className="px-6 py-3 text-sm text-gray-700">{item.courierCharge}</td><td className="px-6 py-3 text-sm text-gray-700">{item.paymentStatus}</td>
                   <td className="px-6 py-3 text-sm font-semibold text-orange-600">{item.amount}</td>
                   <td className="px-6 py-3 text-sm">
                     {item.status === 'Pending' ? (
@@ -253,6 +327,13 @@ const RiderDashboard = () => {
                     ) : (
                       <div className="flex items-center gap-3">
                         <button onClick={() => handleViewDelivery(item)} className="text-blue-600 hover:text-blue-800 font-medium">View</button>
+                        {item.paymentStatus === 'DUE' && <button
+                        onClick={() => handlePaidParcel(item.id)}
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-nowrap transition-colors font-medium"
+                      >
+                        Make Paid
+                      </button>}
+                        
                         <button onClick={() => { setOtpForId(item.id); setOtpValue(''); }} className="text-green-600 hover:text-green-800 font-medium">Complete</button>
                         <button onClick={() => { setFailForId(item.id); setFailReason(''); }} className="text-red-600 hover:text-red-800 font-medium">Fail</button>
                       </div>

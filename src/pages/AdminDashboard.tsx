@@ -24,6 +24,7 @@ import {
   Pencil,
   ShieldCheck,
 } from "lucide-react";
+import { ParcelDetailView } from "../components/ParcelDetailView";
 
 type User = {
   id: string;
@@ -57,6 +58,7 @@ type Merchant = { id: string; name: string; shopName: string; phone?: string; st
 type ParcelStatus =
   | "Requested"
   | "Picked Up"
+  | "Picking Up"
   | "At Area Hub"
   | "In Transit"
   | "At District Hub"
@@ -223,12 +225,12 @@ const Pill: React.FC<{ children: React.ReactNode; tone?: "gray" | "green" | "yel
     tone === "green"
       ? "bg-green-50 text-green-700 border-green-200"
       : tone === "yellow"
-      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-      : tone === "red"
-      ? "bg-red-50 text-red-700 border-red-200"
-      : tone === "blue"
-      ? "bg-blue-50 text-blue-700 border-blue-200"
-      : "bg-gray-50 text-gray-700 border-gray-200";
+        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+        : tone === "red"
+          ? "bg-red-50 text-red-700 border-red-200"
+          : tone === "blue"
+            ? "bg-blue-50 text-blue-700 border-blue-200"
+            : "bg-gray-50 text-gray-700 border-gray-200";
   return <span className={`inline-flex items-center px-2 py-0.5 text-xs border rounded ${cls}`}>{children}</span>;
 };
 
@@ -261,11 +263,11 @@ type FormMode = "create" | "edit";
 type FormModalState =
   | { open: false }
   | {
-      open: true;
-      entity: EntityType;
-      mode: FormMode;
-      initial?: any;
-    };
+    open: true;
+    entity: EntityType;
+    mode: FormMode;
+    initial?: any;
+  };
 
 const FormModal: React.FC<{
   open: boolean;
@@ -339,7 +341,7 @@ const AdminDashboard: React.FC = () => {
     { at: now(), level: "error", message: "Failed job: invoice-generator" },
   ]);
 
-  const [reports, ] = useState<Report[]>([
+  const [reports,] = useState<Report[]>([
     { id: "REP1", name: "Daily Summary", date: new Date().toLocaleDateString(), summary: "Parcels: 120, Revenue: ৳15,000" },
     { id: "REP2", name: "Hub Efficiency", date: new Date().toLocaleDateString(), summary: "Avg transfer time: 6.2h" },
   ]);
@@ -417,7 +419,7 @@ const AdminDashboard: React.FC = () => {
     "Chattogram - Agrabad",
   ]);
 
-  const [parcels, ] = useState<Parcel[]>([
+  const initialParcels: Parcel[] = [
     {
       id: "PCL001",
       merchantId: "M001",
@@ -436,19 +438,116 @@ const AdminDashboard: React.FC = () => {
       createdAt: now(),
       journey: [
         { at: now(), hubId: "H002", label: "Requested", note: "Merchant request created" },
+        { at: now(), hubId: "H002", label: "Picking Up", note: "Rider assigned to pickup" },
         { at: now(), hubId: "H002", label: "Picked Up", note: "Picked up from merchant" },
         { at: now(), hubId: "H002", label: "At Area Hub", note: "Received at area hub" },
         { at: now(), hubId: "H001", label: "At District Hub", note: "Transferred to district hub" },
         { at: now(), label: "In Transit", note: "On route to destination district" },
       ],
     },
-  ]);
 
-  const [disputes, ] = useState<Dispute[]>([
+    {
+      id: "PCL002",
+      merchantId: "M002",
+      customerName: "Nusrat Jahan",
+      customerPhone: "01720000002",
+      originHubId: "H001",
+      destinationHubId: "H004",
+      originDistrict: "Dhaka",
+      destinationDistrict: "Sylhet",
+      weightKg: 0.8,
+      distanceKm: 240,
+      codAmount: 1200,
+      serviceType: "Express",
+      status: "Requested",
+      assignedRiderId: "RD003",
+      createdAt: now(),
+      journey: [
+        { at: now(), hubId: "H001", label: "Requested", note: "Order placed by merchant" },
+        { at: now(), hubId: "H001", label: "Picking Up", note: "Rider assigned to pickup" },
+      ],
+    },
+
+    {
+      id: "PCL003",
+      merchantId: "M003",
+      customerName: "Tanvir Ahmed",
+      customerPhone: "01830000003",
+      originHubId: "H003",
+      destinationHubId: "H002",
+      originDistrict: "Chattogram",
+      destinationDistrict: "Dhaka",
+      weightKg: 2.5,
+      distanceKm: 260,
+      codAmount: 2500,
+      serviceType: "Regular",
+      status: "Delivered",
+      assignedRiderId: "RD001",
+      createdAt: now(),
+      journey: [
+        { at: now(), hubId: "H003", label: "Requested", note: "Pickup requested" },
+        { at: now(), hubId: "H003", label: "Picking Up", note: "Rider assigned to pickup" },
+        { at: now(), hubId: "H003", label: "Picked Up", note: "Picked up from warehouse" },
+        { at: now(), hubId: "H003", label: "At Area Hub", note: "Received at Chattogram hub" },
+        { at: now(), hubId: "H002", label: "At District Hub", note: "Arrived at Dhaka hub" },
+        { at: now(), label: "Out for Delivery", note: "Assigned to delivery rider" },
+        { at: now(), label: "Delivered", note: "Successfully delivered to customer" },
+      ],
+    },
+
+    {
+      id: "PCL004",
+      merchantId: "M001",
+      customerName: "Farhan Kabir",
+      customerPhone: "01940000004",
+      originHubId: "H005",
+      destinationHubId: "H001",
+      originDistrict: "Rajshahi",
+      destinationDistrict: "Dhaka",
+      weightKg: 3.1,
+      distanceKm: 245,
+      codAmount: 1800,
+      serviceType: "Regular",
+      status: "Out for Delivery",
+      assignedRiderId: "RD004",
+      createdAt: now(),
+      journey: [
+        { at: now(), hubId: "H005", label: "Requested", note: "Merchant booking created" },
+        { at: now(), hubId: "H005", label: "Picking Up", note: "Rider assigned to pickup" },
+        { at: now(), hubId: "H005", label: "Picked Up", note: "Pickup completed" },
+        { at: now(), hubId: "H005", label: "At Area Hub", note: "Processed at Rajshahi hub" },
+        { at: now(), hubId: "H001", label: "At District Hub", note: "Arrived at Dhaka hub" },
+        { at: now(), label: "Out for Delivery", note: "Rider heading to customer" },
+      ],
+    },
+
+    {
+      id: "PCL005",
+      merchantId: "M004",
+      customerName: "Shakib Mahmud",
+      customerPhone: "01550000005",
+      originHubId: "H004",
+      destinationHubId: "H006",
+      originDistrict: "Sylhet",
+      destinationDistrict: "Khulna",
+      weightKg: 1.6,
+      distanceKm: 420,
+      codAmount: 950,
+      serviceType: "Express",
+      status: "Requested",
+      assignedRiderId: "",
+      createdAt: now(),
+      journey: [
+        { at: now(), hubId: "H004", label: "Requested", note: "Order placed by merchant" },
+      ],
+    },
+  ]
+
+  const [disputes,] = useState<Dispute[]>([
     { id: "DSP001", parcelId: "PCL001", openedAt: now(), status: "Open", issue: "Customer claims late delivery" },
   ]);
 
-  const [transactions, ] = useState<Transaction[]>([
+  const [transactions,] = useState<Transaction[]>([
     { id: "TX001", type: "Merchant Wallet", refId: "M001", amount: 15000, direction: "credit", at: now(), note: "Wallet top-up" },
   ]);
 
@@ -532,22 +631,22 @@ const AdminDashboard: React.FC = () => {
       entity === "merchant"
         ? { id: "", name: "", shopName: "", phone: "", status: "Pending" as Merchant["status"] }
         : entity === "hubManager"
-        ? { id: "", name: "", hubId: hubs[0]?.id ?? "", phone: "", status: "Active" as HubManager["status"] }
-        : entity === "rider"
-        ? { id: "", name: "", hubId: hubs[0]?.id ?? "", area: "", phone: "", status: "Available" as Rider["status"] }
-        : entity === "adminUser"
-        ? { id: "", name: "", email: "", role: "Support" as User["role"], status: "Active" as User["status"] }
-        : {
-            id: "",
-            name: "",
-            location: "",
-            district: "",
-            type: "area" as Hub["type"],
-            parentHubId: hubs.find((h) => h.type === "district")?.id ?? null,
-            capacity: 2000,
-            coverageAreasText: "", // UI-only
-            status: "Active" as Hub["status"],
-          };
+          ? { id: "", name: "", hubId: hubs[0]?.id ?? "", phone: "", status: "Active" as HubManager["status"] }
+          : entity === "rider"
+            ? { id: "", name: "", hubId: hubs[0]?.id ?? "", area: "", phone: "", status: "Available" as Rider["status"] }
+            : entity === "adminUser"
+              ? { id: "", name: "", email: "", role: "Support" as User["role"], status: "Active" as User["status"] }
+              : {
+                id: "",
+                name: "",
+                location: "",
+                district: "",
+                type: "area" as Hub["type"],
+                parentHubId: hubs.find((h) => h.type === "district")?.id ?? null,
+                capacity: 2000,
+                coverageAreasText: "", // UI-only
+                status: "Active" as Hub["status"],
+              };
 
     if (mode === "edit" && initial) {
       if (entity === "hub") {
@@ -692,14 +791,14 @@ const AdminDashboard: React.FC = () => {
    * ====================== */
   const OverviewModule: React.FC = () => {
     const kpis = useMemo(() => {
-      const totalParcels = parcels.length;
-      const delivered = parcels.filter((p) => p.status === "Delivered").length;
+      const totalParcels = initialParcels.length;
+      const delivered = initialParcels.filter((p) => p.status === "Delivered").length;
       const activeUsers = users.filter((u) => u.status === "Active").length + ridersList.filter((r) => r.status !== "Suspended").length;
-      const revenue = parcels.reduce((acc, p) => acc + estimateParcelFare(p), 0);
+      const revenue = initialParcels.reduce((acc, p) => acc + estimateParcelFare(p), 0);
       const disputesOpen = disputes.filter((d) => d.status === "Open").length;
       const hubActive = hubs.filter((h) => h.status === "Active").length;
       return { totalParcels, delivered, activeUsers, revenue, disputesOpen, hubActive };
-    }, [parcels, users, ridersList, disputes, hubs]);
+    }, [initialParcels, users, ridersList, disputes, hubs]);
 
     const trend = useMemo(() => [18, 22, 19, 26, 31, 28, 35], []);
 
@@ -1312,6 +1411,10 @@ const AdminDashboard: React.FC = () => {
    *  4) Parcel Management (kept)
    * ====================== */
   const ParcelManagementModule: React.FC = () => {
+    const [selectedRider, setSelectedRider] = useState("");
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null);
+    const [parcels, setParcels] = useState<Parcel[]>(initialParcels);
     const [q, setQ] = useState("");
     const rows = useMemo(() => {
       return parcels.map((p) => ({
@@ -1331,6 +1434,33 @@ const AdminDashboard: React.FC = () => {
         return Object.values(p).some((v) => String(v).toLowerCase().includes(s));
       });
     }, [rows, q]);
+    const handleAssignRider = () => {
+      setParcels((prev) => {
+        return prev.map((p) => {
+          if (p.id !== selectedParcel?.id) return p;
+
+          return {
+            ...p,
+            status: "Picking Up",
+            assignedRiderId: selectedRider,
+            journey: [
+              ...p.journey,
+              {
+                at: now(),
+                hubId: p.originHubId,
+                label: "Picking Up",
+                note: "Pickup rider assigned by admin",
+              },
+            ],
+          };
+        })
+      }
+
+      );
+
+      setAssignModalOpen(false);
+      setSelectedRider("");
+    };
 
     return (
       <TableShell
@@ -1375,6 +1505,17 @@ const AdminDashboard: React.FC = () => {
                     <button onClick={() => setDetailModal({ type: "parcel", row: p })} className="text-blue-600">
                       Track
                     </button>
+                    {p.status === "Requested" && (
+                      <button
+                        onClick={() => {
+                          setSelectedParcel(p);
+                          setAssignModalOpen(true);
+                        }}
+                        className="text-green-600 font-medium ml-4"
+                      >
+                        Assign Rider
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -1387,6 +1528,52 @@ const AdminDashboard: React.FC = () => {
               )}
             </tbody>
           </table>
+          {assignModalOpen && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-4">
+                <h2 className="text-lg font-semibold">
+                  Assign Pickup Rider
+                </h2>
+
+                <div className="text-sm text-gray-600">
+                  Parcel ID: <span className="font-medium">{selectedParcel?.id}</span>
+                </div>
+
+                <select
+                  value={selectedRider}
+                  onChange={(e) => setSelectedRider(e.target.value)}
+                  className="w-full border rounded px-3 py-2"
+                >
+                  <option value="">Select Rider</option>
+                  <option value="RD001">Rider 1</option>
+                  <option value="RD002">Rider 2</option>
+                  <option value="RD003">Rider 3</option>
+                  <option value="RD004">Rider 4</option>
+                </select>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setAssignModalOpen(false);
+                      setSelectedRider("");
+                    }}
+                    className="px-4 py-2 border rounded"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    disabled={!selectedRider}
+                    onClick={() => handleAssignRider()}
+                    className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+                  >
+                    Assign
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </TableShell>
     );
@@ -1614,7 +1801,11 @@ const AdminDashboard: React.FC = () => {
               <X size={20} />
             </button>
           </div>
-          <pre className="text-xs bg-gray-50 border rounded p-3 overflow-auto max-h-96">{JSON.stringify(detailModal.row, null, 2)}</pre>
+          {detailModal?.type === "parcel" ? (
+            <ParcelDetailView parcel={detailModal.row} />
+          ) : <pre className="text-xs bg-gray-50 border rounded p-3 overflow-auto max-h-96">{JSON.stringify(detailModal.row, null, 2)}</pre>
+          }
+
           <div className="mt-4 flex justify-end">
             <button onClick={() => setDetailModal(null)} className="px-4 py-2 border rounded">
               Close
@@ -1870,9 +2061,8 @@ const AdminDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveModule(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                  activeModule === item.id ? "bg-green-800" : "hover:bg-green-500"
-                }`}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeModule === item.id ? "bg-green-800" : "hover:bg-green-500"
+                  }`}
                 title={item.label}
               >
                 <Icon size={20} />
