@@ -541,6 +541,28 @@ const AdminDashboard: React.FC = () => {
         { at: now(), hubId: "H004", label: "Requested", note: "Order placed by merchant" },
       ],
     },
+    {
+      id: "PCL001",
+      merchantId: "M001",
+      customerName: "Arif Hasan",
+      customerPhone: "01610000001",
+      originHubId: "H002",
+      destinationHubId: "H003",
+      originDistrict: "Dhaka",
+      destinationDistrict: "Chattogram",
+      weightKg: 1.2,
+      distanceKm: 260,
+      codAmount: 850,
+      serviceType: "Regular",
+      status: "At Area Hub",
+      assignedRiderId: "RD002",
+      createdAt: now(),
+      journey: [
+        { at: now(), hubId: "H002", label: "Requested", note: "Merchant request created" },
+        { at: now(), hubId: "H002", label: "Picking Up", note: "Rider assigned to pickup" },
+        { at: now(), hubId: "H002", label: "Picked Up", note: "Picked up from merchant" },
+      ],
+    },
   ]
 
   const [disputes,] = useState<Dispute[]>([

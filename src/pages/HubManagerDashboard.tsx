@@ -141,13 +141,23 @@ const HubManagerDashboard: React.FC = () => {
       id: "PCL003",
       origin: "Chattogram District",
       destination: "Dhaka Central",
-      status: "Not Picked",
+      status: "Arriving",
       eta: "4:00 PM",
       rider: "Jalal",
       weight: "3.2kg",
       type: "District Transfer",
       logs: [{ at: "9:20 AM", note: "Left district hub", status: "Not Picked" }],
     },
+    {
+      id: "PCL004",
+      origin: "Banani Hub",
+      destination: "Mohakhali Hub",
+      status: "Not Picked",
+      eta: "5:30 PM",
+      weight: "1.5kg",
+      type: "Hub Transfer",
+      logs: [{ at: "12:00 PM", note: "Created", status: "Not Picked" }],
+    }
   ]);
 
   // Inventory means physically in this hub warehouse (sorted/scanned)
@@ -158,6 +168,17 @@ const HubManagerDashboard: React.FC = () => {
       origin: "Barishal District",
       destination: "Dhaka Central",
       status: "In Hub",
+      receivedAt: "12:30 PM",
+      weight: "0.8kg",
+      nextHop: "Mirpur Hub",
+      routeType: "To Destination Hub",
+      logs: [{ at: "12:30 PM", note: "Received into inventory", status: "In Hub" }],
+    },
+    {
+      id: "PCL101",
+      origin: "Barishal District",
+      destination: "Dhaka Central",
+      status: "Return - In Hub",
       receivedAt: "12:30 PM",
       weight: "0.8kg",
       nextHop: "Mirpur Hub",
@@ -395,11 +416,19 @@ const HubManagerDashboard: React.FC = () => {
 
     // Handle incoming parcels
     setIncomingParcels((prev) =>
-      prev.map((p) => {
-        if (!parcelIds.includes(p.id)) return p;
-        return addLog({ ...p, rider: rider.name }, p.status, `Assigned rider: ${rider.name} (${rider.id})`);
-      })
-    );
+    prev.map((p) => {
+      if (!parcelIds.includes(p.id)) return p;
+
+      const newStatus =
+        p.status === "Not Picked" ? "Arriving" : p.status;
+
+      return {
+        ...p,
+        rider: rider.name,
+        status: newStatus,
+      };
+    })
+  );
 
     // increase rider parcel count (demo)
     setRiders((prev) =>
@@ -409,7 +438,7 @@ const HubManagerDashboard: React.FC = () => {
     setAssignModal({ open: false, parcelIds: [] });
     setAssignRiderId("");
     showToast(`Assigned ${parcelIds.length} parcel(s) to ${rider.name}`);
-    
+
     // Clear selections
     setIncomingSelected(new Set());
     setOutgoingSelected(new Set());
@@ -795,7 +824,11 @@ const HubManagerDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.origin}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.destination}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.rider}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    {p.rider ?? (
+                      <span className="text-red-500 font-medium">Unassigned</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.eta}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={statusPill(p.status)}>{p.status}</span>
@@ -846,6 +879,16 @@ const HubManagerDashboard: React.FC = () => {
   };
 
   const InventoryModule = () => {
+    const [addDemoOpen, setAddDemoOpen] = useState(false);
+
+const [demoForm, setDemoForm] = useState({
+  origin: "",
+  destination: "",
+  weight: "",
+  nextHop: "",
+  routeType: "Last-mile",
+});
+
     const [searchTerm, setSearchTerm] = useState("");
 
     const filtered = inventoryParcels.filter((p) => {
@@ -874,9 +917,107 @@ const HubManagerDashboard: React.FC = () => {
       // keep modal flow simple: open one by one manually in real app
       showToast("Tip: Create outgoing one-by-one for correct routing", "success");
     };
+    const handleAddDemoSubmit = () => {
+  if (!demoForm.destination || !demoForm.origin) {
+    return showToast("Origin & Destination required", "error");
+  }
+
+  const newId = uid();
+
+  setInventoryParcels((prev) => [
+    addLog(
+      {
+        id: newId,
+        origin: demoForm.origin,
+        destination: demoForm.destination,
+        status: "In Hub",
+        receivedAt: nowTime(),
+        weight: demoForm.weight || "1.0kg",
+        nextHop: demoForm.nextHop || "Last-mile",
+        routeType: demoForm.routeType,
+        logs: [],
+      },
+      "In Hub",
+      "Manually added into inventory (demo)"
+    ),
+    ...prev,
+  ]);
+
+  setAddDemoOpen(false);
+  setDemoForm({
+    origin: "",
+    destination: "",
+    weight: "",
+    nextHop: "",
+    routeType: "Last-mile",
+  });
+
+  showToast(`Added ${newId} to Inventory`, "success");
+};
+
 
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
+      {addDemoOpen && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-6">
+      <h3 className="text-lg font-semibold mb-4">Add Demo Parcel</h3>
+
+      <div className="space-y-3">
+        <input
+          className="w-full px-3 py-2 border rounded"
+          placeholder="Origin"
+          value={demoForm.origin}
+          onChange={(e) => setDemoForm({ ...demoForm, origin: e.target.value })}
+        />
+
+        <input
+          className="w-full px-3 py-2 border rounded"
+          placeholder="Destination"
+          value={demoForm.destination}
+          onChange={(e) =>
+            setDemoForm({ ...demoForm, destination: e.target.value })
+          }
+        />
+
+        <input
+          className="w-full px-3 py-2 border rounded"
+          placeholder="Weight (e.g. 1.2kg)"
+          value={demoForm.weight}
+          onChange={(e) =>
+            setDemoForm({ ...demoForm, weight: e.target.value })
+          }
+        />
+
+        <input
+          className="w-full px-3 py-2 border rounded"
+          placeholder="Next Hop"
+          value={demoForm.nextHop}
+          onChange={(e) =>
+            setDemoForm({ ...demoForm, nextHop: e.target.value })
+          }
+        />
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          onClick={() => setAddDemoOpen(false)}
+          className="px-4 py-2 border rounded"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleAddDemoSubmit}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        >
+          Add Parcel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Hub Inventory</h2>
@@ -892,28 +1033,8 @@ const HubManagerDashboard: React.FC = () => {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-full md:w-72"
             />
             <button
-              onClick={() => {
-                const newId = uid();
-                setInventoryParcels((prev) => [
-                  addLog(
-                    {
-                      id: newId,
-                      origin: "Dhaka Central",
-                      destination: "Customer (Last-mile)",
-                      status: "In Hub",
-                      receivedAt: nowTime(),
-                      weight: "1.0kg",
-                      nextHop: "Last-mile",
-                      routeType: "Last-mile",
-                      logs: [],
-                    },
-                    "In Hub",
-                    "Manually added into inventory (demo)"
-                  ),
-                  ...prev,
-                ]);
-                showToast(`Added ${newId} to Inventory`);
-              }}
+              
+               onClick={() => setAddDemoOpen(true)}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 inline-flex items-center gap-2"
               title="Demo helper"
             >
@@ -1263,9 +1384,8 @@ const HubManagerDashboard: React.FC = () => {
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-60 px-4 py-3 rounded-lg shadow-lg text-white ${
-            toast.type === "error" ? "bg-red-600" : "bg-green-600"
-          }`}
+          className={`fixed top-4 right-4 z-60 px-4 py-3 rounded-lg shadow-lg text-white ${toast.type === "error" ? "bg-red-600" : "bg-green-600"
+            }`}
         >
           {toast.msg}
         </div>
@@ -1273,9 +1393,8 @@ const HubManagerDashboard: React.FC = () => {
 
       {/* Sidebar */}
       <div
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-linear-to-b from-green-600 to-green-700 text-white transition-all duration-300 flex flex-col`}
+        className={`${sidebarOpen ? "w-64" : "w-20"
+          } bg-linear-to-b from-green-600 to-green-700 text-white transition-all duration-300 flex flex-col`}
       >
         <div className="p-4 flex items-center justify-between border-b border-green-500">
           <div className="flex items-center gap-2">
@@ -1296,9 +1415,8 @@ const HubManagerDashboard: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => setActiveModule(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                  activeModule === item.id ? "bg-green-800" : "hover:bg-green-500"
-                }`}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${activeModule === item.id ? "bg-green-800" : "hover:bg-green-500"
+                  }`}
               >
                 <Icon size={20} />
                 {sidebarOpen && <span className="font-medium">{item.label}</span>}
